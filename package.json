@@ -1,0 +1,41 @@
+{
+  "name": "first-step",
+  "version": "1.0.0",
+  "description": "A minimal web app for viewing and running HTML/CSS/JS code snippets in real-time",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "format": "prettier --write \"**/*.{js,css,html,md,json}\"",
+    "lint": "eslint \"**/*.js\"",
+    "lint:fix": "eslint \"**/*.js\" --fix",
+    "test": "echo \"Tests not yet implemented\" && exit 0"
+  },
+  "keywords": [
+    "code-editor",
+    "html",
+    "css",
+    "javascript",
+    "runner",
+    "preview",
+    "playground"
+  ],
+  "author": "Ravi Akbar <raviakbar97>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:raviakbar97/first-Step.git"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "vm2": "^3.9.19"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "prettier": "^3.8.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

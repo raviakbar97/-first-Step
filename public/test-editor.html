@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeMirror Test</title>
+    <link rel="stylesheet" href="/lib/codemirror/codemirror.min.css">
+    <link rel="stylesheet" href="/lib/codemirror/dracula.min.css">
+    <style>
+        body {
+            padding: 20px;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            font-family: sans-serif;
+        }
+        .test-editor {
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #28a745;
+            color: white;
+        }
+        .status.error {
+            background: #dc3545;
+            color: white;
+        }
+        .status.info {
+            background: #4a90e2;
+            color: white;
+        }
+        .instructions {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>CodeMirror Editor Test</h1>
+
+    <div id="status" class="status info">Loading...</div>
+
+    <div class="instructions">
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Try typing in the editor below</li>
+            <li>If you can type, CodeMirror is working correctly</li>
+            <li>If you cannot type, there's an issue with the editor</li>
+        </ol>
+    </div>
+
+    <div class="test-editor">
+        <textarea id="test-editor">// Try typing here!
+console.log('Hello, CodeMirror!');</textarea>
+    </div>
+
+    <div class="test-editor">
+        <textarea id="test-editor-2">// This is a second editor
+function test() {
+    return "success";
+}</textarea>
+    </div>
+
+    <script src="/lib/codemirror/codemirror.min.js"></script>
+    <script src="/lib/codemirror/mode/javascript/javascript.min.js"></script>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+
+        // Check if CodeMirror loaded
+        if (typeof CodeMirror === 'undefined') {
+            statusDiv.textContent = 'ERROR: CodeMirror failed to load';
+            statusDiv.className = 'status error';
+            console.error('CodeMirror is not defined');
+        } else {
+            statusDiv.textContent = 'SUCCESS: CodeMirror loaded. Initializing editors...';
+            statusDiv.className = 'status success';
+
+            console.log('CodeMirror loaded successfully');
+
+            try {
+                // Initialize first editor
+                const editor1 = CodeMirror.fromTextArea(document.getElementById('test-editor'), {
+                    mode: 'javascript',
+                    theme: 'dracula',
+                    lineNumbers: true,
+                    lineWrapping: true
+                });
+
+                console.log('Editor 1 initialized');
+                console.log('Editor 1 wrapper:', editor1.getWrapperElement());
+
+                // Initialize second editor
+                const editor2 = CodeMirror.fromTextArea(document.getElementById('test-editor-2'), {
+                    mode: 'javascript',
+                    theme: 'dracula',
+                    lineNumbers: true,
+                    lineWrapping: true
+                });
+
+                console.log('Editor 2 initialized');
+                console.log('Editor 2 wrapper:', editor2.getWrapperElement());
+
+                // Check if editors are editable
+                setTimeout(() => {
+                    const wrapper1 = editor1.getWrapperElement();
+                    const wrapper2 = editor2.getWrapperElement();
+
+                    console.log('Wrapper 1 display:', window.getComputedStyle(wrapper1).display);
+                    console.log('Wrapper 2 display:', window.getComputedStyle(wrapper2).display);
+
+                    // Try to focus the first editor
+                    editor1.focus();
+                    console.log('Attempted to focus editor 1');
+
+                    statusDiv.textContent = 'SUCCESS: Both editors initialized and ready! Try typing.';
+                }, 100);
+
+            } catch (error) {
+                statusDiv.textContent = 'ERROR: Failed to initialize editors: ' + error.message;
+                statusDiv.className = 'status error';
+                console.error('Error initializing editors:', error);
+            }
+        }
+    </script>
+</body>
+</html>

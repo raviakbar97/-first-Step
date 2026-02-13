@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>first-Step Debug</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #e0e0e0;
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 4px;
+        }
+        .editor-container {
+            margin: 20px 0;
+            border: 1px solid #444;
+        }
+        #console-output {
+            background: #0d0d0d;
+            color: #0f0;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #444;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #28a745;
+            color: white;
+        }
+        .status.error {
+            background: #dc3545;
+            color: white;
+        }
+        .status.info {
+            background: #4a90e2;
+            color: white;
+        }
+        .status.warn {
+            background: #ffc107;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <h1>first-Step Editor Debug</h1>
+
+    <div id="status" class="status info">Initializing...</div>
+
+    <div class="debug-section">
+        <h2>Environment Info</h2>
+        <div id="env-info"></div>
+    </div>
+
+    <div class="debug-section">
+        <h2>Editor Test</h2>
+        <p>Try typing in the editor below:</p>
+        <div class="editor-container">
+            <textarea id="test-editor">// Test editor
+console.log('Hello!');</textarea>
+        </div>
+        <div id="editor-info" style="margin-top: 10px;"></div>
+    </div>
+
+    <div class="debug-section">
+        <h2>Console Output</h2>
+        <div id="console-output"></div>
+    </div>
+
+    <!-- Load CodeMirror -->
+    <script src="/lib/codemirror/codemirror.min.js"></script>
+    <script src="/lib/codemirror/mode/javascript/javascript.min.js"></script>
+
+    <script>
+        const consoleOutput = document.getElementById('console-output');
+        const statusDiv = document.getElementById('status');
+        const envInfo = document.getElementById('env-info');
+        const editorInfo = document.getElementById('editor-info');
+
+        function log(message, type = 'info') {
+            const line = document.createElement('div');
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            line.style.color = type === 'error' ? '#f66' : type === 'warn' ? '#fc0' : '#0f0';
+            consoleOutput.appendChild(line);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+        function updateStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+        }
+
+        // Environment info
+        envInfo.innerHTML = `
+            <p><strong>Document ready state:</strong> ${document.readyState}</p>
+            <p><strong>CodeMirror:</strong> ${typeof CodeMirror !== 'undefined' ? '✓ Loaded' : '✗ Not loaded'}</p>
+            <p><strong>Viewport:</strong> ${window.innerWidth}x${window.innerHeight}</p>
+        `;
+
+        log('Starting initialization...');
+        log('Document ready state: ' + document.readyState);
+        log('CodeMirror type: ' + typeof CodeMirror);
+
+        if (typeof CodeMirror === 'undefined') {
+            updateStatus('ERROR: CodeMirror failed to load', 'error');
+            log('ERROR: CodeMirror is undefined', 'error');
+        } else {
+            log('CodeMirror is loaded');
+            updateStatus('Initializing editor...', 'info');
+
+            try {
+                const textarea = document.getElementById('test-editor');
+                log('Test textarea found: ' + (textarea ? 'YES' : 'NO'));
+
+                // Check textarea properties
+                log('Textarea display (before): ' + window.getComputedStyle(textarea).display);
+                log('Textarea visibility: ' + (textarea.offsetParent !== null ? 'VISIBLE' : 'HIDDEN'));
+
+                // Initialize CodeMirror
+                const editor = CodeMirror.fromTextArea(textarea, {
+                    mode: 'javascript',
+                    theme: 'dracula',
+                    lineNumbers: true,
+                    lineWrapping: true
+                });
+
+                log('CodeMirror editor created');
+
+                // Check editor properties
+                const wrapper = editor.getWrapperElement();
+                log('Wrapper element: ' + (wrapper ? wrapper.tagName : 'NULL'));
+                log('Wrapper display: ' + window.getComputedStyle(wrapper).display);
+                log('Wrapper visibility: ' + (wrapper.offsetParent !== null ? 'VISIBLE' : 'HIDDEN'));
+                log('Wrapper position: ' + window.getComputedStyle(wrapper).position);
+                log('Wrapper z-index: ' + window.getComputedStyle(wrapper).zIndex);
+                log('Wrapper height: ' + window.getComputedStyle(wrapper).height);
+                log('Wrapper width: ' + window.getComputedStyle(wrapper).width);
+
+                // Check for any overlays
+                const rect = wrapper.getBoundingClientRect();
+                log('Wrapper rect: top=' + rect.top + ', left=' + rect.left + ', width=' + rect.width + ', height=' + rect.height);
+
+                // Check textarea after CodeMirror
+                log('Textarea display (after): ' + window.getComputedStyle(textarea).display);
+                log('Textarea still in DOM: ' + (document.getElementById('test-editor') ? 'YES' : 'NO'));
+
+                editorInfo.innerHTML = `
+                    <p><strong>Editor Status:</strong> ✓ Initialized</p>
+                    <p><strong>Wrapper Tag:</strong> ${wrapper.tagName}</p>
+                    <p><strong>Wrapper Display:</strong> ${window.getComputedStyle(wrapper).display}</p>
+                    <p><strong>Wrapper Size:</strong> ${window.getComputedStyle(wrapper).width} × ${window.getComputedStyle(wrapper).height}</p>
+                `;
+
+                updateStatus('SUCCESS: Editor is ready! Try typing.', 'success');
+                log('Editor initialization completed successfully');
+
+                // Try to focus the editor
+                setTimeout(() => {
+                    log('Attempting to focus editor...');
+                    editor.focus();
+                    log('Editor focused');
+
+                    // Check if editor has focus
+                    setTimeout(() => {
+                        const hasFocus = editor.hasFocus();
+                        log('Editor has focus: ' + hasFocus);
+                    }, 100);
+                }, 100);
+
+            } catch (error) {
+                updateStatus('ERROR: ' + error.message, 'error');
+                log('ERROR: ' + error.message, 'error');
+                log('Stack: ' + error.stack, 'error');
+            }
+        }
+
+        // Log keyboard events
+        document.addEventListener('keydown', (e) => {
+            log('Key pressed: ' + e.key + ' (code: ' + e.code + ')');
+        });
+
+        // Log focus events
+        document.addEventListener('focusin', (e) => {
+            log('Focus in: ' + e.target.tagName + ' (class: ' + e.target.className + ')');
+        });
+    </script>
+</body>
+</html>

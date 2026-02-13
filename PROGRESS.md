@@ -68,6 +68,7 @@
    - ⏳ Milestone 5: Polish and deploy
 
 ### Files Created:
+
 ```
 first-Step/
 ├── .eslintrc.json          (ESLint config)
@@ -90,11 +91,13 @@ first-Step/
 ```
 
 ### Git Status:
+
 - Branch: master
 - Commit: 297ea58 "milestone 1: Project setup complete"
 - Files: 12 files, 1410 insertions
 
 ### To Run:
+
 ```bash
 cd /root/.openclaw/workspace/first-Step
 npm install
@@ -103,10 +106,12 @@ npm start
 ```
 
 ### GitHub Status:
+
 - Remote configured: git@github.com:raviakbar97/first-Step.git
 - Push status: Failed (repository not found on GitHub)
 - Next action: User needs to create the repository on GitHub
 
 ---
+
 **Status**: Milestone 1 Complete ✅
 **Next**: Setup GitHub repository or continue to Milestone 2

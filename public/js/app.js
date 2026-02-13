@@ -1,3 +1,4 @@
+// ===== CODEMIRROR EDITORS =====
 // Initialize CodeMirror editors
 const htmlEditor = CodeMirror.fromTextArea(document.getElementById('html-editor'), {
   mode: 'xml',
@@ -33,7 +34,174 @@ const jsEditor = CodeMirror.fromTextArea(document.getElementById('js-editor'), {
 // Track active editor
 let activeEditor = htmlEditor;
 
-// Tab switching
+// ===== THEME MANAGEMENT =====
+const STORAGE_KEYS = {
+  theme: 'firststep-theme',
+  snippets: 'firststep-snippets',
+  currentSnippet: 'firststep-current-snippet',
+};
+
+function setTheme(theme) {
+  if (theme === 'light') {
+    document.body.classList.add('light-theme');
+    htmlEditor.setOption('theme', 'default');
+    cssEditor.setOption('theme', 'default');
+    jsEditor.setOption('theme', 'default');
+  } else {
+    document.body.classList.remove('light-theme');
+    htmlEditor.setOption('theme', 'dracula');
+    cssEditor.setOption('theme', 'dracula');
+    jsEditor.setOption('theme', 'dracula');
+  }
+  localStorage.setItem(STORAGE_KEYS.theme, theme);
+}
+
+function loadTheme() {
+  const savedTheme = localStorage.getItem(STORAGE_KEYS.theme) || 'dark';
+  document.getElementById('themeSelect').value = savedTheme;
+  setTheme(savedTheme);
+}
+
+// ===== SNIPPET MANAGEMENT =====
+function getSnippets() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.snippets) || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveSnippet() {
+  const name = prompt('Enter a name for this snippet:');
+  if (!name) return;
+
+  const snippet = {
+    id: Date.now().toString(),
+    name,
+    html: htmlEditor.getValue(),
+    css: cssEditor.getValue(),
+    js: jsEditor.getValue(),
+    createdAt: new Date().toISOString(),
+  };
+
+  const snippets = getSnippets();
+  snippets.unshift(snippet); // Add to beginning
+
+  try {
+    localStorage.setItem(STORAGE_KEYS.snippets, JSON.stringify(snippets));
+    addConsoleLine(`Snippet "${name}" saved successfully!`, 'info');
+  } catch (e) {
+    addConsoleLine(`Error saving snippet: ${e.message}`, 'error');
+  }
+}
+
+function deleteSnippet(id) {
+  if (!confirm('Are you sure you want to delete this snippet?')) return;
+
+  const snippets = getSnippets().filter(s => s.id !== id);
+  localStorage.setItem(STORAGE_KEYS.snippets, JSON.stringify(snippets));
+
+  renderSnippetList();
+  addConsoleLine('Snippet deleted', 'info');
+}
+
+function loadSnippet(id) {
+  const snippets = getSnippets();
+  const snippet = snippets.find(s => s.id === id);
+
+  if (!snippet) {
+    addConsoleLine('Snippet not found', 'error');
+    return;
+  }
+
+  htmlEditor.setValue(snippet.html);
+  cssEditor.setValue(snippet.css);
+  jsEditor.setValue(snippet.js);
+
+  closeModal();
+  addConsoleLine(`Snippet "${snippet.name}" loaded`, 'info');
+  updatePreview();
+}
+
+// ===== MODAL =====
+const modal = document.getElementById('snippetModal');
+
+function openModal() {
+  modal.classList.add('active');
+  renderSnippetList();
+}
+
+function closeModal() {
+  modal.classList.remove('active');
+}
+
+function renderSnippetList() {
+  const snippetList = document.getElementById('snippetList');
+  const snippets = getSnippets();
+
+  if (snippets.length === 0) {
+    snippetList.innerHTML = '<div class="snippet-empty">No saved snippets yet</div>';
+    return;
+  }
+
+  snippetList.innerHTML = snippets
+    .map(
+      snippet => `
+        <div class="snippet-item" data-id="${snippet.id}">
+            <div class="snippet-info">
+                <div class="snippet-name">${escapeHtml(snippet.name)}</div>
+                <div class="snippet-date">${new Date(snippet.createdAt).toLocaleString()}</div>
+            </div>
+            <div class="snippet-actions">
+                <button class="snippet-btn load" onclick="loadSnippet('${snippet.id}')">Load</button>
+                <button class="snippet-btn delete" onclick="deleteSnippet('${snippet.id}')">Delete</button>
+            </div>
+        </div>
+    `
+    )
+    .join('');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ===== AUTO-SAVE CURRENT WORK =====
+function saveCurrentWork() {
+  try {
+    const current = {
+      html: htmlEditor.getValue(),
+      css: cssEditor.getValue(),
+      js: jsEditor.getValue(),
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(STORAGE_KEYS.currentSnippet, JSON.stringify(current));
+  } catch (e) {
+    // Ignore auto-save errors
+  }
+}
+
+function loadCurrentWork() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.currentSnippet);
+    if (saved) {
+      const current = JSON.parse(saved);
+      // Only load if less than 24 hours old
+      if (Date.now() - current.timestamp < 24 * 60 * 60 * 1000) {
+        htmlEditor.setValue(current.html);
+        cssEditor.setValue(current.css);
+        jsEditor.setValue(current.js);
+        addConsoleLine('Restored previous work', 'info');
+      }
+    }
+  } catch (e) {
+    // Ignore load errors
+  }
+}
+
+// ===== TAB SWITCHING =====
 const tabs = document.querySelectorAll('.tab');
 tabs.forEach(tab => {
   tab.addEventListener('click', () => {
@@ -74,17 +242,15 @@ htmlEditor.getWrapperElement().style.display = 'block';
 cssEditor.getWrapperElement().style.display = 'none';
 jsEditor.getWrapperElement().style.display = 'none';
 
-// Refresh editors on resize
+// ===== RESIZE HANDLER =====
 window.addEventListener('resize', () => {
   htmlEditor.refresh();
   cssEditor.refresh();
   jsEditor.refresh();
 });
 
-// Preview iframe
+// ===== PREVIEW & CONSOLE =====
 const previewFrame = document.getElementById('preview-frame');
-
-// Console output
 const consoleOutput = document.getElementById('console-output');
 
 function addConsoleLine(message, type = 'log') {
@@ -102,7 +268,6 @@ function clearConsole() {
   consoleOutput.innerHTML = '<div class="console-line console-info">> Console cleared</div>';
 }
 
-// Update preview
 function updatePreview() {
   const html = htmlEditor.getValue();
   const css = cssEditor.getValue();
@@ -187,6 +352,7 @@ window.addEventListener('message', event => {
   }
 });
 
+// ===== EVENT LISTENERS =====
 // Run button
 document.getElementById('runBtn').addEventListener('click', () => {
   clearConsole();
@@ -210,6 +376,46 @@ document.addEventListener('keydown', e => {
     document.getElementById('runBtn').click();
   }
 });
+
+// Theme selector
+document.getElementById('themeSelect').addEventListener('change', e => {
+  setTheme(e.target.value);
+});
+
+// Save snippet button
+document.getElementById('saveBtn').addEventListener('click', saveSnippet);
+
+// Load snippet button
+document.getElementById('loadBtn').addEventListener('click', openModal);
+
+// Close modal button
+document.getElementById('closeModal').addEventListener('click', closeModal);
+
+// Close modal on outside click
+modal.addEventListener('click', e => {
+  if (e.target === modal) {
+    closeModal();
+  }
+});
+
+// Auto-save on editor change (debounced)
+let autoSaveTimeout;
+htmlEditor.on('change', () => {
+  clearTimeout(autoSaveTimeout);
+  autoSaveTimeout = setTimeout(saveCurrentWork, 1000);
+});
+cssEditor.on('change', () => {
+  clearTimeout(autoSaveTimeout);
+  autoSaveTimeout = setTimeout(saveCurrentWork, 1000);
+});
+jsEditor.on('change', () => {
+  clearTimeout(autoSaveTimeout);
+  autoSaveTimeout = setTimeout(saveCurrentWork, 1000);
+});
+
+// ===== INITIALIZATION =====
+loadTheme();
+loadCurrentWork();
 
 // Initial run
 setTimeout(() => {

@@ -23,6 +23,12 @@
           <h1>first-Step</h1>
         </div>
         <div class="actions">
+          <select id="themeSelect" class="select-input" title="Select Theme">
+            <option value="dark">🌙 Dark</option>
+            <option value="light">☀️ Light</option>
+          </select>
+          <button id="saveBtn" class="btn btn-secondary" title="Save Snippet">💾 Save</button>
+          <button id="loadBtn" class="btn btn-secondary" title="Load Snippet">📂 Load</button>
           <button id="runBtn" class="btn btn-primary">▶ Run</button>
           <button id="clearBtn" class="btn btn-secondary">Clear</button>
         </div>
@@ -101,6 +107,19 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="console-line console-info">> Ready to run code...</div>
         </div>
       </section>
+
+      <!-- Snippet Modal -->
+      <div id="snippetModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Saved Snippets</h3>
+            <button id="closeModal" class="btn-sm">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div id="snippetList" class="snippet-list"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- CodeMirror JS -->

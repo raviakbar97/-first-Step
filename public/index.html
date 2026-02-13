@@ -9,10 +9,12 @@
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"
+      onerror="this.onerror=null;console.warn('Failed to load CodeMirror CSS')"
     />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css"
+      onerror="this.onerror=null;console.warn('Failed to load Dracula theme CSS')"
     />
   </head>
   <body>
@@ -122,13 +124,48 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     </div>
 
-    <!-- CodeMirror JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <!-- CodeMirror JS - Load in order, add error handling -->
+    <script>
+      // Global flag to track CodeMirror loading status
+      window.codeMirrorLoadError = false;
+
+      function handleScriptError() {
+        console.error('Failed to load CodeMirror');
+        window.codeMirrorLoadError = true;
+      }
+    </script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"
+      onerror="handleScriptError()"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"
+      onerror="handleScriptError()"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"
+      onerror="handleScriptError()"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"
+      onerror="handleScriptError()"
+      crossorigin="anonymous"
+    ></script>
 
     <!-- App Scripts -->
     <script src="/js/app.js"></script>
+
+    <!-- Loading/Error Notification -->
+    <script>
+      // Show error message if CodeMirror failed to load after 5 seconds
+      setTimeout(() => {
+        if (window.codeMirrorLoadError || typeof CodeMirror === 'undefined') {
+          console.warn('CodeMirror not loaded - app will use fallback mode');
+        }
+      }, 5000);
+    </script>
   </body>
 </html>

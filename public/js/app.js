@@ -1,38 +1,147 @@
 // ===== CODEMIRROR EDITORS =====
-// Initialize CodeMirror editors
-const htmlEditor = CodeMirror.fromTextArea(document.getElementById('html-editor'), {
-  mode: 'xml',
-  theme: 'dracula',
-  lineNumbers: true,
-  autoCloseTags: true,
-  autoCloseBrackets: true,
-  tabSize: 2,
-  indentUnit: 2,
-  lineWrapping: true,
-});
+let htmlEditor, cssEditor, jsEditor;
+let usingCodeMirror = false;
+let activeEditor = null;
 
-const cssEditor = CodeMirror.fromTextArea(document.getElementById('css-editor'), {
-  mode: 'css',
-  theme: 'dracula',
-  lineNumbers: true,
-  autoCloseBrackets: true,
-  tabSize: 2,
-  indentUnit: 2,
-  lineWrapping: true,
-});
+// Helper function to initialize CodeMirror editors with error handling
+function initializeCodeMirrorEditors() {
+  try {
+    // Check if CodeMirror is loaded
+    if (typeof CodeMirror === 'undefined') {
+      throw new Error('CodeMirror is not loaded');
+    }
 
-const jsEditor = CodeMirror.fromTextArea(document.getElementById('js-editor'), {
-  mode: 'javascript',
-  theme: 'dracula',
-  lineNumbers: true,
-  autoCloseBrackets: true,
-  tabSize: 2,
-  indentUnit: 2,
-  lineWrapping: true,
-});
+    // Check if required textareas exist
+    const htmlTextarea = document.getElementById('html-editor');
+    const cssTextarea = document.getElementById('css-editor');
+    const jsTextarea = document.getElementById('js-editor');
 
-// Track active editor
-let activeEditor = htmlEditor;
+    if (!htmlTextarea || !cssTextarea || !jsTextarea) {
+      throw new Error('Required editor textareas not found');
+    }
+
+    // Initialize CodeMirror editors
+    htmlEditor = CodeMirror.fromTextArea(htmlTextarea, {
+      mode: 'xml',
+      theme: 'dracula',
+      lineNumbers: true,
+      autoCloseTags: true,
+      autoCloseBrackets: true,
+      tabSize: 2,
+      indentUnit: 2,
+      lineWrapping: true,
+    });
+
+    cssEditor = CodeMirror.fromTextArea(cssTextarea, {
+      mode: 'css',
+      theme: 'dracula',
+      lineNumbers: true,
+      autoCloseBrackets: true,
+      tabSize: 2,
+      indentUnit: 2,
+      lineWrapping: true,
+    });
+
+    jsEditor = CodeMirror.fromTextArea(jsTextarea, {
+      mode: 'javascript',
+      theme: 'dracula',
+      lineNumbers: true,
+      autoCloseBrackets: true,
+      tabSize: 2,
+      indentUnit: 2,
+      lineWrapping: true,
+    });
+
+    usingCodeMirror = true;
+    console.log('CodeMirror editors initialized successfully');
+
+    // Set active editor
+    activeEditor = htmlEditor;
+
+    // Initialize display
+    htmlEditor.getWrapperElement().style.display = 'block';
+    cssEditor.getWrapperElement().style.display = 'none';
+    jsEditor.getWrapperElement().style.display = 'none';
+
+    return true;
+  } catch (error) {
+    console.error('Failed to initialize CodeMirror:', error.message);
+    console.warn('Falling back to basic textarea editors');
+
+    // Fallback to basic textareas
+    usingCodeMirror = false;
+
+    // Get textareas
+    const htmlTextarea = document.getElementById('html-editor');
+    const cssTextarea = document.getElementById('css-editor');
+    const jsTextarea = document.getElementById('js-editor');
+
+    // Show them as regular textareas
+    htmlTextarea.style.display = 'block';
+    cssTextarea.style.display = 'none';
+    jsTextarea.style.display = 'none';
+
+    // Create wrapper objects that mimic CodeMirror's API
+    htmlEditor = {
+      textarea: htmlTextarea,
+      getValue: () => htmlTextarea.value,
+      setValue: (val) => htmlTextarea.value = val,
+      getWrapperElement: () => htmlTextarea.parentElement,
+      refresh: () => {},
+      on: (event, callback) => {
+        htmlTextarea.addEventListener(event === 'change' ? 'input' : event, callback);
+      }
+    };
+
+    cssEditor = {
+      textarea: cssTextarea,
+      getValue: () => cssTextarea.value,
+      setValue: (val) => cssTextarea.value = val,
+      getWrapperElement: () => cssTextarea.parentElement,
+      refresh: () => {},
+      on: (event, callback) => {
+        cssTextarea.addEventListener(event === 'change' ? 'input' : event, callback);
+      }
+    };
+
+    jsEditor = {
+      textarea: jsTextarea,
+      getValue: () => jsTextarea.value,
+      setValue: (val) => jsTextarea.value = val,
+      getWrapperElement: () => jsTextarea.parentElement,
+      refresh: () => {},
+      on: (event, callback) => {
+        jsTextarea.addEventListener(event === 'change' ? 'input' : event, callback);
+      }
+    };
+
+    activeEditor = htmlEditor;
+
+    // Add visual feedback that we're using fallback
+    const editorSection = document.querySelector('.editor-section');
+    const notice = document.createElement('div');
+    notice.style.cssText = 'background-color: #ffc107; color: #000; padding: 0.5rem; text-align: center; font-size: 0.875rem;';
+    notice.textContent = '⚠️ Running in basic mode (CodeMirror not available). You can still edit your code.';
+    editorSection.insertBefore(notice, editorSection.firstChild);
+
+    return false;
+  }
+}
+
+// Helper to set CodeMirror theme
+function setEditorTheme(theme) {
+  if (usingCodeMirror) {
+    if (theme === 'light') {
+      htmlEditor.setOption('theme', 'default');
+      cssEditor.setOption('theme', 'default');
+      jsEditor.setOption('theme', 'default');
+    } else {
+      htmlEditor.setOption('theme', 'dracula');
+      cssEditor.setOption('theme', 'dracula');
+      jsEditor.setOption('theme', 'dracula');
+    }
+  }
+}
 
 // ===== THEME MANAGEMENT =====
 const STORAGE_KEYS = {
@@ -44,21 +153,20 @@ const STORAGE_KEYS = {
 function setTheme(theme) {
   if (theme === 'light') {
     document.body.classList.add('light-theme');
-    htmlEditor.setOption('theme', 'default');
-    cssEditor.setOption('theme', 'default');
-    jsEditor.setOption('theme', 'default');
+    setEditorTheme('light');
   } else {
     document.body.classList.remove('light-theme');
-    htmlEditor.setOption('theme', 'dracula');
-    cssEditor.setOption('theme', 'dracula');
-    jsEditor.setOption('theme', 'dracula');
+    setEditorTheme('dark');
   }
   localStorage.setItem(STORAGE_KEYS.theme, theme);
 }
 
 function loadTheme() {
   const savedTheme = localStorage.getItem(STORAGE_KEYS.theme) || 'dark';
-  document.getElementById('themeSelect').value = savedTheme;
+  const themeSelect = document.getElementById('themeSelect');
+  if (themeSelect) {
+    themeSelect.value = savedTheme;
+  }
   setTheme(savedTheme);
 }
 
@@ -127,16 +235,18 @@ function loadSnippet(id) {
 const modal = document.getElementById('snippetModal');
 
 function openModal() {
-  modal.classList.add('active');
+  if (modal) modal.classList.add('active');
   renderSnippetList();
 }
 
 function closeModal() {
-  modal.classList.remove('active');
+  if (modal) modal.classList.remove('active');
 }
 
 function renderSnippetList() {
   const snippetList = document.getElementById('snippetList');
+  if (!snippetList) return;
+
   const snippets = getSnippets();
 
   if (snippets.length === 0) {
@@ -202,51 +312,57 @@ function loadCurrentWork() {
 }
 
 // ===== TAB SWITCHING =====
-const tabs = document.querySelectorAll('.tab');
-tabs.forEach(tab => {
-  tab.addEventListener('click', () => {
-    // Remove active class from all tabs
-    tabs.forEach(t => t.classList.remove('active'));
+function initTabSwitching() {
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Remove active class from all tabs
+      tabs.forEach(t => t.classList.remove('active'));
 
-    // Add active class to clicked tab
-    tab.classList.add('active');
+      // Add active class to clicked tab
+      tab.classList.add('active');
 
-    // Get language
-    const lang = tab.dataset.lang;
+      // Get language
+      const lang = tab.dataset.lang;
 
-    // Show/hide editors
-    if (lang === 'html') {
-      htmlEditor.getWrapperElement().style.display = 'block';
-      cssEditor.getWrapperElement().style.display = 'none';
-      jsEditor.getWrapperElement().style.display = 'none';
-      activeEditor = htmlEditor;
-    } else if (lang === 'css') {
-      htmlEditor.getWrapperElement().style.display = 'none';
-      cssEditor.getWrapperElement().style.display = 'block';
-      jsEditor.getWrapperElement().style.display = 'none';
-      activeEditor = cssEditor;
-    } else if (lang === 'js') {
-      htmlEditor.getWrapperElement().style.display = 'none';
-      cssEditor.getWrapperElement().style.display = 'none';
-      jsEditor.getWrapperElement().style.display = 'block';
-      activeEditor = jsEditor;
-    }
+      // Show/hide editors
+      if (lang === 'html') {
+        showEditor(htmlEditor, cssEditor, jsEditor);
+      } else if (lang === 'css') {
+        showEditor(cssEditor, htmlEditor, jsEditor);
+      } else if (lang === 'js') {
+        showEditor(jsEditor, htmlEditor, cssEditor);
+      }
 
-    // Refresh editor
-    activeEditor.refresh();
+      // Refresh editor
+      if (activeEditor && activeEditor.refresh) {
+        activeEditor.refresh();
+      }
+    });
   });
-});
+}
 
-// Initialize display
-htmlEditor.getWrapperElement().style.display = 'block';
-cssEditor.getWrapperElement().style.display = 'none';
-jsEditor.getWrapperElement().style.display = 'none';
+function showEditor(active, hide1, hide2) {
+  if (usingCodeMirror) {
+    active.getWrapperElement().style.display = 'block';
+    hide1.getWrapperElement().style.display = 'none';
+    hide2.getWrapperElement().style.display = 'none';
+  } else {
+    // Fallback mode
+    active.textarea.style.display = 'block';
+    hide1.textarea.style.display = 'none';
+    hide2.textarea.style.display = 'none';
+  }
+  activeEditor = active;
+}
 
 // ===== RESIZE HANDLER =====
 window.addEventListener('resize', () => {
-  htmlEditor.refresh();
-  cssEditor.refresh();
-  jsEditor.refresh();
+  if (usingCodeMirror) {
+    htmlEditor.refresh();
+    cssEditor.refresh();
+    jsEditor.refresh();
+  }
 });
 
 // ===== PREVIEW & CONSOLE =====
@@ -254,6 +370,8 @@ const previewFrame = document.getElementById('preview-frame');
 const consoleOutput = document.getElementById('console-output');
 
 function addConsoleLine(message, type = 'log') {
+  if (!consoleOutput) return;
+
   const line = document.createElement('div');
   line.className = `console-line console-${type}`;
 
@@ -265,10 +383,13 @@ function addConsoleLine(message, type = 'log') {
 }
 
 function clearConsole() {
+  if (!consoleOutput) return;
   consoleOutput.innerHTML = '<div class="console-line console-info">> Console cleared</div>';
 }
 
 function updatePreview() {
+  if (!previewFrame) return;
+
   const html = htmlEditor.getValue();
   const css = cssEditor.getValue();
   const js = jsEditor.getValue();
@@ -353,71 +474,119 @@ window.addEventListener('message', event => {
 });
 
 // ===== EVENT LISTENERS =====
-// Run button
-document.getElementById('runBtn').addEventListener('click', () => {
-  clearConsole();
-  addConsoleLine('Running code...', 'info');
-  updatePreview();
-});
-
-// Clear button
-document.getElementById('clearBtn').addEventListener('click', () => {
-  clearConsole();
-  previewFrame.srcdoc = '';
-});
-
-// Clear console button
-document.getElementById('clearConsoleBtn').addEventListener('click', clearConsole);
-
-// Auto-run on Ctrl+Enter
-document.addEventListener('keydown', e => {
-  if (e.ctrlKey && e.key === 'Enter') {
-    e.preventDefault();
-    document.getElementById('runBtn').click();
+function initEventListeners() {
+  // Run button
+  const runBtn = document.getElementById('runBtn');
+  if (runBtn) {
+    runBtn.addEventListener('click', () => {
+      clearConsole();
+      addConsoleLine('Running code...', 'info');
+      updatePreview();
+    });
   }
-});
 
-// Theme selector
-document.getElementById('themeSelect').addEventListener('change', e => {
-  setTheme(e.target.value);
-});
-
-// Save snippet button
-document.getElementById('saveBtn').addEventListener('click', saveSnippet);
-
-// Load snippet button
-document.getElementById('loadBtn').addEventListener('click', openModal);
-
-// Close modal button
-document.getElementById('closeModal').addEventListener('click', closeModal);
-
-// Close modal on outside click
-modal.addEventListener('click', e => {
-  if (e.target === modal) {
-    closeModal();
+  // Clear button
+  const clearBtn = document.getElementById('clearBtn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      clearConsole();
+      if (previewFrame) previewFrame.srcdoc = '';
+    });
   }
-});
 
-// Auto-save on editor change (debounced)
-let autoSaveTimeout;
-htmlEditor.on('change', () => {
-  clearTimeout(autoSaveTimeout);
-  autoSaveTimeout = setTimeout(saveCurrentWork, 1000);
-});
-cssEditor.on('change', () => {
-  clearTimeout(autoSaveTimeout);
-  autoSaveTimeout = setTimeout(saveCurrentWork, 1000);
-});
-jsEditor.on('change', () => {
-  clearTimeout(autoSaveTimeout);
-  autoSaveTimeout = setTimeout(saveCurrentWork, 1000);
-});
+  // Clear console button
+  const clearConsoleBtn = document.getElementById('clearConsoleBtn');
+  if (clearConsoleBtn) {
+    clearConsoleBtn.addEventListener('click', clearConsole);
+  }
+
+  // Auto-run on Ctrl+Enter
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.key === 'Enter') {
+      e.preventDefault();
+      if (runBtn) runBtn.click();
+    }
+  });
+
+  // Theme selector
+  const themeSelect = document.getElementById('themeSelect');
+  if (themeSelect) {
+    themeSelect.addEventListener('change', e => {
+      setTheme(e.target.value);
+    });
+  }
+
+  // Save snippet button
+  const saveBtn = document.getElementById('saveBtn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', saveSnippet);
+  }
+
+  // Load snippet button
+  const loadBtn = document.getElementById('loadBtn');
+  if (loadBtn) {
+    loadBtn.addEventListener('click', openModal);
+  }
+
+  // Close modal button
+  const closeModalBtn = document.getElementById('closeModal');
+  if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', closeModal);
+  }
+
+  // Close modal on outside click
+  if (modal) {
+    modal.addEventListener('click', e => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+  }
+
+  // Auto-save on editor change (debounced)
+  let autoSaveTimeout;
+
+  const setupAutoSave = (editor) => {
+    editor.on('change', () => {
+      clearTimeout(autoSaveTimeout);
+      autoSaveTimeout = setTimeout(saveCurrentWork, 1000);
+    });
+  };
+
+  setupAutoSave(htmlEditor);
+  setupAutoSave(cssEditor);
+  setupAutoSave(jsEditor);
+}
 
 // ===== INITIALIZATION =====
-loadTheme();
-loadCurrentWork();
+function initApp() {
+  console.log('Initializing first-Step app...');
 
-// Initial run
-setTimeout(() => {
-  addConsoleLine('Ready! Press Run or Ctrl+Enter to execute.', 'info');
-}, 500);
+  // Initialize editors
+  const codeMirrorLoaded = initializeCodeMirrorEditors();
+
+  if (codeMirrorLoaded) {
+    console.log('✓ CodeMirror loaded successfully');
+  } else {
+    console.warn('⚠ CodeMirror not available, using fallback editors');
+    addConsoleLine('Running in basic mode - some features may be limited', 'warn');
+  }
+
+  // Initialize other components
+  loadTheme();
+  loadCurrentWork();
+  initTabSwitching();
+  initEventListeners();
+
+  // Initial run
+  setTimeout(() => {
+    addConsoleLine('Ready! Press Run or Ctrl+Enter to execute.', 'info');
+  }, 500);
+}
+
+// Wait for DOM to be ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
